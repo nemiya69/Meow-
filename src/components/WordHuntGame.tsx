@@ -193,6 +193,25 @@ const WordHuntGame: React.FC = () => {
     }
   }, [foundWords]);
 
+  // Show all answers
+  const showAnswers = useCallback(() => {
+    setFoundWords(new Set(WORDS));
+    setWordsLeft(0);
+
+    // Mark all word cells as found
+    setGrid(prevGrid => {
+      const newGrid = prevGrid.map(row => [...row]);
+      wordPositions.forEach(position => {
+        position.cells.forEach(({ row, col }) => {
+          newGrid[row][col].isFound = true;
+        });
+      });
+      return newGrid;
+    });
+
+    setTimeout(() => setGameWon(true), 500);
+  }, [wordPositions]);
+
   // Handle mouse/touch events
   const handleCellMouseDown = (row: number, col: number) => {
     setIsSelecting(true);
@@ -406,10 +425,17 @@ const WordHuntGame: React.FC = () => {
         )}
       </div>
 
-      <div className="text-center space-y-2">
+      <div className="text-center space-y-4">
         <p className="font-sweet text-sm text-muted-foreground">
           Drag to select letters and find the hidden words!
         </p>
+        <Button 
+          onClick={showAnswers}
+          variant="outline"
+          className="font-sweet text-sm"
+        >
+          Show Answers
+        </Button>
       </div>
     </div>
   );
