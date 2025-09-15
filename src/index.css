@@ -2,41 +2,58 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&family=Dancing+Script:wght@400;500;600;700&display=swap');
+
+/* Romantic Birthday Word Hunt Design System */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Romantic Color Palette */
+    --background: 330 100% 98%;
+    --foreground: 340 15% 25%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 320 50% 97%;
+    --card-foreground: 340 15% 25%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 320 50% 97%;
+    --popover-foreground: 340 15% 25%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 340 75% 65%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 310 40% 85%;
+    --secondary-foreground: 340 15% 25%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 315 25% 92%;
+    --muted-foreground: 340 10% 45%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 300 65% 75%;
+    --accent-foreground: 340 15% 25%;
+
+    --love: 350 85% 70%;
+    --love-light: 350 85% 85%;
+    --heart: 0 85% 65%;
+    --sweet: 290 60% 80%;
+    --dreamy: 260 45% 85%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 320 30% 88%;
+    --input: 320 30% 90%;
+    --ring: 340 75% 65%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
+
+    /* Romantic Gradients */
+    --gradient-romantic: linear-gradient(135deg, hsl(var(--love-light)), hsl(var(--sweet)));
+    --gradient-dreamy: linear-gradient(180deg, hsl(var(--background)), hsl(var(--dreamy)));
+    --gradient-love: linear-gradient(45deg, hsl(var(--love)), hsl(var(--heart)));
+    
+    /* Shadows & Effects */
+    --shadow-romantic: 0 10px 30px -5px hsl(var(--love) / 0.2);
+    --shadow-soft: 0 4px 15px -3px hsl(var(--sweet) / 0.3);
+    --glow-heart: 0 0 20px hsl(var(--heart) / 0.4);
 
     --sidebar-background: 0 0% 98%;
 
@@ -100,6 +117,105 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
+    background: var(--gradient-dreamy);
+    min-height: 100vh;
+    font-family: 'Quicksand', sans-serif;
   }
+}
+
+@layer components {
+  /* Romantic Typography */
+  .font-romantic {
+    font-family: 'Dancing Script', cursive;
+  }
+  
+  .font-sweet {
+    font-family: 'Quicksand', sans-serif;
+    font-weight: 500;
+  }
+
+  /* Game Grid Styles */
+  .word-grid {
+    display: grid;
+    gap: 2px;
+    padding: 20px;
+    background: var(--gradient-romantic);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-romantic);
+  }
+
+  .grid-cell {
+    @apply w-8 h-8 flex items-center justify-center text-sm font-semibold rounded;
+    background: hsl(var(--card));
+    color: hsl(var(--card-foreground));
+    border: 1px solid hsl(var(--border));
+    transition: all 0.2s ease;
+    user-select: none;
+    cursor: pointer;
+  }
+
+  .grid-cell:hover {
+    background: hsl(var(--love-light));
+    transform: scale(1.05);
+  }
+
+  .grid-cell.selected {
+    background: hsl(var(--love));
+    color: hsl(var(--primary-foreground));
+    box-shadow: var(--glow-heart);
+  }
+
+  .grid-cell.found {
+    background: hsl(var(--heart));
+    color: hsl(var(--primary-foreground));
+    animation: pulse 0.5s ease-in-out;
+  }
+
+  /* Animations */
+  .float-hearts {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .sparkle {
+    animation: sparkle 2s linear infinite;
+  }
+
+  .countdown-number {
+    animation: countdown-pop 1s ease-in-out;
+  }
+
+  /* Button Variants */
+  .btn-romantic {
+    @apply px-6 py-3 rounded-full font-semibold transition-all duration-300;
+    background: var(--gradient-love);
+    color: hsl(var(--primary-foreground));
+    box-shadow: var(--shadow-soft);
+  }
+
+  .btn-romantic:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-romantic);
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes sparkle {
+  0%, 100% { opacity: 0; transform: scale(0); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes countdown-pop {
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
 }

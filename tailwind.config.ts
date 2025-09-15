@@ -57,6 +57,15 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        love: "hsl(var(--love))",
+        "love-light": "hsl(var(--love-light))",
+        heart: "hsl(var(--heart))",
+        sweet: "hsl(var(--sweet))",
+        dreamy: "hsl(var(--dreamy))",
+      },
+      fontFamily: {
+        'romantic': ['Dancing Script', 'cursive'],
+        'sweet': ['Quicksand', 'sans-serif'],
       },
       borderRadius: {
         lg: "var(--radius)",
