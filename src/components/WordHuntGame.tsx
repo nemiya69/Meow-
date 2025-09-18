@@ -422,8 +422,7 @@ const WordHuntGame: React.FC = () => {
           Birthday Word Hunt 💖
         </h1>
         <p className="font-sweet text-lg text-muted-foreground">
-          Find all the hidden words in the puzzle. The counter will tell you how many are left. 
-          When you find them all, a surprise awaits...
+          I know you like word hunt so i made one for you :D it has 7 of the words we use often in it I MADE IT A BIT HARD I THINK I hope you wont get through it in 2 secounds; GOOD LUCK BABY HAVE FUN
         </p>
         <div className="font-sweet text-xl text-love">
           Words left: <span className="font-bold text-heart">{wordsLeft}</span>
