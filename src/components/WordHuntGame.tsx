@@ -32,6 +32,9 @@ const WordHuntGame: React.FC = () => {
   const [isSelecting, setIsSelecting] = useState(false);
   const [selectedCells, setSelectedCells] = useState<Array<{ row: number; col: number }>>([]);
   const [wordPositions, setWordPositions] = useState<WordPosition[]>([]);
+  const [gameStartTime, setGameStartTime] = useState<number>(0);
+  const [timeLeft, setTimeLeft] = useState<number>(600); // 10 minutes in seconds
+  const [hintAvailable, setHintAvailable] = useState(false);
   
   const gridRef = useRef<HTMLDivElement>(null);
 
@@ -193,24 +196,33 @@ const WordHuntGame: React.FC = () => {
     }
   }, [foundWords]);
 
-  // Show all answers
-  const showAnswers = useCallback(() => {
-    setFoundWords(new Set(WORDS));
-    setWordsLeft(0);
-
-    // Mark all word cells as found
+  // Show hint (only available after 10 minutes)
+  const showHint = useCallback(() => {
+    if (!hintAvailable) return;
+    
+    // Find a random unfound word and highlight its first letter
+    const unfoundWords = wordPositions.filter(pos => !foundWords.has(pos.word));
+    if (unfoundWords.length === 0) return;
+    
+    const randomWord = unfoundWords[Math.floor(Math.random() * unfoundWords.length)];
+    const firstCell = randomWord.cells[0];
+    
+    // Briefly highlight the first letter of the word
     setGrid(prevGrid => {
       const newGrid = prevGrid.map(row => [...row]);
-      wordPositions.forEach(position => {
-        position.cells.forEach(({ row, col }) => {
-          newGrid[row][col].isFound = true;
-        });
-      });
+      newGrid[firstCell.row][firstCell.col].isSelected = true;
       return newGrid;
     });
-
-    setTimeout(() => setGameWon(true), 500);
-  }, [wordPositions]);
+    
+    // Remove highlight after 2 seconds
+    setTimeout(() => {
+      setGrid(prevGrid => {
+        const newGrid = prevGrid.map(row => [...row]);
+        newGrid[firstCell.row][firstCell.col].isSelected = false;
+        return newGrid;
+      });
+    }, 2000);
+  }, [hintAvailable, wordPositions, foundWords]);
 
   // Handle mouse/touch events
   const handleCellMouseDown = (row: number, col: number) => {
@@ -301,9 +313,25 @@ const WordHuntGame: React.FC = () => {
     }, 1000);
   };
 
-  // Initialize game on mount
+  // Initialize game on mount and start timer
   useEffect(() => {
     initializeGame();
+    const startTime = Date.now();
+    setGameStartTime(startTime);
+    
+    // Update countdown every second
+    const interval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      const remaining = Math.max(0, 600 - elapsed);
+      setTimeLeft(remaining);
+      
+      if (remaining === 0) {
+        setHintAvailable(true);
+        clearInterval(interval);
+      }
+    }, 1000);
+    
+    return () => clearInterval(interval);
   }, [initializeGame]);
 
   if (showFinalMessage) {
@@ -430,11 +458,12 @@ const WordHuntGame: React.FC = () => {
           Drag to select letters and find the hidden words!
         </p>
         <Button 
-          onClick={showAnswers}
+          onClick={showHint}
           variant="outline"
           className="font-sweet text-sm"
+          disabled={!hintAvailable}
         >
-          Show Answers
+          {hintAvailable ? "Show Hint" : `Hint in ${Math.floor(timeLeft / 60)}:${(timeLeft % 60).toString().padStart(2, '0')}`}
         </Button>
       </div>
     </div>
