@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 // The words to find (exactly as specified)
 const WORDS = ['meow', 'unreal', 'perchance', 'baby', 'I love you', 'strawberries', 'waffles'];
 
-const GRID_SIZE = 12;
+const GRID_SIZE = 15;
 
 interface Cell {
   letter: string;
@@ -60,7 +60,7 @@ const WordHuntGame: React.FC = () => {
   // Try to place a word in the grid
   const tryPlaceWord = (word: string, grid: string[][], positions: WordPosition[]): boolean => {
     const cleanWord = word.replace(/\s/g, '').toUpperCase();
-    const attempts = 100;
+    const attempts = 500;
 
     for (let attempt = 0; attempt < attempts; attempt++) {
       const direction = directions[Math.floor(Math.random() * directions.length)];
@@ -114,13 +114,19 @@ const WordHuntGame: React.FC = () => {
     const newGrid: string[][] = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(''));
     const positions: WordPosition[] = [];
 
-    // Try to place all words
-    const wordsToPlace = [...WORDS];
+    // Try to place all words, starting with longest first for better placement
+    const wordsToPlace = [...WORDS].sort((a, b) => b.replace(/\s/g, '').length - a.replace(/\s/g, '').length);
+    let placedCount = 0;
+    
     for (const word of wordsToPlace) {
-      if (!tryPlaceWord(word, newGrid, positions)) {
+      if (tryPlaceWord(word, newGrid, positions)) {
+        placedCount++;
+      } else {
         console.warn(`Could not place word: ${word}`);
       }
     }
+
+    console.log(`Successfully placed ${placedCount} out of ${WORDS.length} words`);
 
     // Fill empty cells with random letters
     for (let row = 0; row < GRID_SIZE; row++) {
@@ -144,7 +150,7 @@ const WordHuntGame: React.FC = () => {
 
     setGrid(cellGrid);
     setWordPositions(positions);
-    setWordsLeft(WORDS.length);
+    setWordsLeft(positions.length); // Use actual placed words count
     setFoundWords(new Set());
   }, []);
 
