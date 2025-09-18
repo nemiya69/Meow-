@@ -35,6 +35,7 @@ const WordHuntGame: React.FC = () => {
   const [gameStartTime, setGameStartTime] = useState<number>(0);
   const [timeLeft, setTimeLeft] = useState<number>(600); // 10 minutes in seconds
   const [hintAvailable, setHintAvailable] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   const gridRef = useRef<HTMLDivElement>(null);
 
@@ -111,47 +112,89 @@ const WordHuntGame: React.FC = () => {
 
   // Initialize the game grid
   const initializeGame = useCallback(() => {
-    const newGrid: string[][] = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(''));
-    const positions: WordPosition[] = [];
+    try {
+      const newGrid: string[][] = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(''));
+      const positions: WordPosition[] = [];
 
-    // Try to place all words, starting with longest first for better placement
-    const wordsToPlace = [...WORDS].sort((a, b) => b.replace(/\s/g, '').length - a.replace(/\s/g, '').length);
-    let placedCount = 0;
-    
-    for (const word of wordsToPlace) {
-      if (tryPlaceWord(word, newGrid, positions)) {
-        placedCount++;
-      } else {
-        console.warn(`Could not place word: ${word}`);
-      }
-    }
-
-    console.log(`Successfully placed ${placedCount} out of ${WORDS.length} words`);
-
-    // Fill empty cells with random letters
-    for (let row = 0; row < GRID_SIZE; row++) {
-      for (let col = 0; col < GRID_SIZE; col++) {
-        if (newGrid[row][col] === '') {
-          newGrid[row][col] = getRandomLetter();
+      // Try to place all words, starting with longest first for better placement
+      const wordsToPlace = [...WORDS].sort((a, b) => b.replace(/\s/g, '').length - a.replace(/\s/g, '').length);
+      let placedCount = 0;
+      
+      for (const word of wordsToPlace) {
+        if (tryPlaceWord(word, newGrid, positions)) {
+          placedCount++;
+        } else {
+          console.warn(`Could not place word: ${word}`);
         }
       }
+
+      console.log(`Successfully placed ${placedCount} out of ${WORDS.length} words`);
+
+      // Ensure we have at least a basic grid even if no words were placed
+      if (placedCount === 0) {
+        // Place some basic words manually if automatic placement fails
+        const simpleWords = ['MEOW', 'BABY', 'LOVE'];
+        for (let i = 0; i < Math.min(simpleWords.length, 3); i++) {
+          const word = simpleWords[i];
+          for (let j = 0; j < word.length; j++) {
+            if (i < GRID_SIZE && j < GRID_SIZE) {
+              newGrid[i][j] = word[j];
+            }
+          }
+          if (i < GRID_SIZE) {
+            positions.push({
+              word: word.toLowerCase(),
+              cells: Array.from({ length: word.length }, (_, j) => ({ row: i, col: j })),
+              direction: 'horizontal'
+            });
+            placedCount++;
+          }
+        }
+      }
+
+      // Fill empty cells with random letters
+      for (let row = 0; row < GRID_SIZE; row++) {
+        for (let col = 0; col < GRID_SIZE; col++) {
+          if (newGrid[row][col] === '') {
+            newGrid[row][col] = getRandomLetter();
+          }
+        }
+      }
+
+      // Convert to Cell objects
+      const cellGrid: Cell[][] = newGrid.map((row, rowIndex) =>
+        row.map((letter, colIndex) => ({
+          letter,
+          row: rowIndex,
+          col: colIndex,
+          isSelected: false,
+          isFound: false
+        }))
+      );
+
+      setGrid(cellGrid);
+      setWordPositions(positions);
+      setWordsLeft(positions.length); // Use actual placed words count
+      setFoundWords(new Set());
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error initializing game:', error);
+      // Create a minimal fallback grid
+      const fallbackGrid: Cell[][] = Array(GRID_SIZE).fill(null).map((_, rowIndex) =>
+        Array(GRID_SIZE).fill(null).map((_, colIndex) => ({
+          letter: getRandomLetter(),
+          row: rowIndex,
+          col: colIndex,
+          isSelected: false,
+          isFound: false
+        }))
+      );
+      setGrid(fallbackGrid);
+      setWordPositions([]);
+      setWordsLeft(0);
+      setFoundWords(new Set());
+      setIsLoading(false);
     }
-
-    // Convert to Cell objects
-    const cellGrid: Cell[][] = newGrid.map((row, rowIndex) =>
-      row.map((letter, colIndex) => ({
-        letter,
-        row: rowIndex,
-        col: colIndex,
-        isSelected: false,
-        isFound: false
-      }))
-    );
-
-    setGrid(cellGrid);
-    setWordPositions(positions);
-    setWordsLeft(positions.length); // Use actual placed words count
-    setFoundWords(new Set());
   }, []);
 
   // Check if selected cells form a valid word
@@ -232,11 +275,16 @@ const WordHuntGame: React.FC = () => {
 
   // Handle mouse/touch events
   const handleCellMouseDown = (row: number, col: number) => {
+    if (!grid.length || !grid[row] || !grid[row][col]) return;
+    
     setIsSelecting(true);
     setSelectedCells([{ row, col }]);
     setGrid(prevGrid => {
+      if (!prevGrid.length) return prevGrid;
       const newGrid = prevGrid.map(r => r.map(c => ({ ...c, isSelected: false })));
-      newGrid[row][col].isSelected = true;
+      if (newGrid[row] && newGrid[row][col]) {
+        newGrid[row][col].isSelected = true;
+      }
       return newGrid;
     });
   };
@@ -340,6 +388,19 @@ const WordHuntGame: React.FC = () => {
     return () => clearInterval(interval);
   }, [initializeGame]);
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="text-4xl animate-pulse">💖</div>
+          <p className="font-sweet text-lg text-muted-foreground">
+            Preparing your special word hunt...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (showFinalMessage) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
@@ -441,7 +502,7 @@ const WordHuntGame: React.FC = () => {
         style={{ gridTemplateColumns: `repeat(${GRID_SIZE}, 1fr)` }}
         onMouseLeave={handleCellMouseUp}
       >
-        {grid.map((row, rowIndex) =>
+        {grid.length > 0 ? grid.map((row, rowIndex) =>
           row.map((cell, colIndex) => (
             <div
               key={`${rowIndex}-${colIndex}`}
@@ -453,6 +514,13 @@ const WordHuntGame: React.FC = () => {
               onTouchEnd={handleCellMouseUp}
             >
               {cell.letter}
+            </div>
+          ))
+        ) : (
+          // Fallback empty grid if initialization failed
+          Array.from({ length: GRID_SIZE * GRID_SIZE }, (_, index) => (
+            <div key={index} className="grid-cell">
+              {getRandomLetter()}
             </div>
           ))
         )}
